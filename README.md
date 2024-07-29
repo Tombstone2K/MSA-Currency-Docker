@@ -10,3 +10,7 @@ This project is a Spring Boot-based microservices architecture that handles curr
 * Dockerized for easy deployment and management.
 * API gateway configuration for routing requests.
 * Unit testing for critical components.
+
+## Architecture
+
+![msa_arch](https://github.com/user-attachments/assets/0e8d4e0e-9563-4c74-a81f-c136bf6023c4)

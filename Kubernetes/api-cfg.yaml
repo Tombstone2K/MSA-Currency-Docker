@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+data:
+  # eureka.client.service-url.defaultZone: http://eureka-server-service:8761/eureka
+  SPRING_CLOUD_GATEWAY_ROUTES_0_ID: metal-deployment
+  SPRING_CLOUD_GATEWAY_ROUTES_0_URI: http://metal-service:8082/
+  SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0: "Path=/metal-exchange/**"
+  SPRING_CLOUD_GATEWAY_ROUTES_1_ID: currency-deployment
+  SPRING_CLOUD_GATEWAY_ROUTES_1_URI: http://currency-service:8081/
+  SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0: "Path=/currency-exchange/**"
+  SPRING_CLOUD_GATEWAY_ROUTES_2_ID: mainrun-deployment
+  SPRING_CLOUD_GATEWAY_ROUTES_2_URI: http://mainrun-service:8080/
+  SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_0: "Path=/sell/**"

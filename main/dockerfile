@@ -1,0 +1,4 @@
+FROM openjdk:21-jdk
+EXPOSE 8080
+COPY main.jar runmain.jar
+ENTRYPOINT ["java","-jar","/runmain.jar"]

@@ -1,0 +1,4 @@
+FROM openjdk:21-jdk
+EXPOSE 8888
+COPY apig.jar apigateway.jar
+ENTRYPOINT ["java","-jar","/apigateway.jar"]

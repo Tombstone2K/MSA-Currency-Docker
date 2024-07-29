@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secrets
+type: Opaque
+stringData:
+  mysql-root-password: kubaccess
+  mysql-user: kubaccess
+  # mysql-database: main
+  mysql-password: kubaccess
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-config
+data:  # store initial SQL commands
+  init.sql: |
+    
+    CREATE DATABASE IF NOT EXISTS metal;
+    USE metal;
+
+    CREATE TABLE metal_value (
+        id INT PRIMARY KEY,
+        metal_from VARCHAR(255) NOT NULL,
+        currency_to VARCHAR(255) NOT NULL,
+        conversion_multiple DECIMAL(15, 5) NOT NULL
+    ) ENGINE=InnoDB;
+
+    INSERT INTO metal_value (id, metal_from, currency_to, conversion_multiple)
+    VALUES (101, 'GOLD', 'USD', 150.00000);
+
+    INSERT INTO metal_value (id, metal_from, currency_to, conversion_multiple)
+    VALUES (102, 'SILVER', 'USD', 112.00000);
+
+    INSERT INTO metal_value (id, metal_from, currency_to, conversion_multiple)
+    VALUES (103, 'PLATINUM', 'USD', 125.00000);
+
+    GRANT ALL ON metal.* TO 'kubaccess'@'%';
+    FLUSH PRIVILEGES;
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysqldb-service
+spec:
+  selector:
+    app: mysqldb
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP #LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysqldb-deployment
+spec:
+  selector:
+    matchLabels:
+      app: mysqldb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysqldb
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: mysqldb
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-secrets
+                key: mysql-root-password
+          - name: MYSQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: mysql-secrets
+                key: mysql-user
+          # - name: MYSQL_DATABASE
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: mysql-secrets
+          #       key: mysql-database
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-secrets
+                key: mysql-password
+        ports:
+          - containerPort: 3306
+            name: mysql
+
+        volumeMounts:
+          - name: mysql-persistent-storage
+            mountPath: /var/lib/mysql
+            subPath: "mysql"
+          - name: mysql-initdb
+            mountPath: /docker-entrypoint-initdb.d  # used to configure our database
+
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: mysql-pv-claim
+        - name: mysql-initdb
+          configMap:
+            name: mysql-initdb-config

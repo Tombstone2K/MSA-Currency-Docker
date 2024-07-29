@@ -1,0 +1,4 @@
+FROM openjdk:21-jdk
+EXPOSE 8761
+COPY eureka.jar eurekaserver.jar
+ENTRYPOINT ["java","-jar","/eurekaserver.jar"]

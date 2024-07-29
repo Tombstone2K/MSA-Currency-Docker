@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mainrun-service
+spec:
+  selector:
+    app: mainrun
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mainrun-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mainrun
+  template:
+    metadata:
+      labels:
+        app: mainrun
+    spec:
+      containers:
+        - name: mainrun
+          image: tombstone2k/sbmainrun
+          ports:
+            - containerPort: 8080
+          env:
+            - name: eureka.client.service-url.defaultZone
+              valueFrom:
+                configMapKeyRef:
+                  name: eureka-config
+                  key: eurekaURL
+          # env:
+          #   - name: eureka.client.service-url.defaultZone
+          #     value: http://eureka-server-service:8761/eureka
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
